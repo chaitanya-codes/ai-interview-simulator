@@ -1,15 +1,12 @@
 "use client";
 import { useState } from "react";
 
+
 export default function Home() {
-  const [file, setFile] =
-    useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
-  const [questions, setQuestions] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
+  const [questions, setQuestions] = useState<Question[] | null>(null);
+  const [loading, setLoading] = useState(false);
 
   async function handleUpload() {
     if (!file) return;
@@ -20,7 +17,7 @@ export default function Home() {
 
     formData.append("resume", file);
 
-    const response = await fetch("/api/questions", {
+    const response = await fetch("/api/analyze_resume", {
       method: "POST",
       body: formData,
     }
@@ -30,7 +27,7 @@ export default function Home() {
       console.error(text);
       throw new Error("Request failed");
     }
-    
+
     const data = await response.json();
 
     setQuestions(data.questions);
