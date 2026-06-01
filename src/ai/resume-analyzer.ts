@@ -4,21 +4,21 @@ import { z } from "zod";
 
 export const ResumeProfileSchema = z.object({
     candidateName: z.string().optional(),
-
     skills: z.array(z.string()),
-
     technologies: z.array(z.string()),
-
-    projects: z.array(z.string()),
-
+    projects: z.array(
+        z.object({
+            name: z.string(),
+            description: z.string(),
+            technologies: z.array(z.string()),
+        })
+    ),
     education: z.string().optional(),
-
     experienceLevel: z.enum([
         "student",
         "junior",
         "mid",
     ]),
-
     summary: z.string(),
 });
 
@@ -31,20 +31,33 @@ export async function analyzeResume(resumeText: string): Promise<ResumeProfile> 
         messages: [{
             role: "system",
             content: `
-Extract resume information.
+You are a strict resume parsing engine.
 
-Return valid JSON only.
+Extract structured data from the resume.
 
+RULES:
+- Return ONLY valid JSON
+- Do NOT include markdown, text, or explanation
+- Use empty arrays if data is missing
+- Do NOT guess or invent information
+
+OUTPUT SCHEMA:
 {
-  "candidateName": "",
-  "skills": [],
-  "technologies": [],
-  "projects": [],
-  "education": "",
-  "experienceLevel": "",
-  "summary": ""
+  "candidateName": string,
+  "skills": string[],
+  "technologies": string[],
+  "projects": [
+    {
+      "name": string,
+      "description": string,
+      "technologies": string[]
+    }
+  ],
+  "education": string,
+  "experienceLevel": "student" | "junior" | "mid",
+  "summary": string
 }
-`,
+`
         },
         {
             role: "user",
@@ -60,6 +73,6 @@ Return valid JSON only.
 
     const raw = JSON.parse(content);
     const profile = ResumeProfileSchema.parse(raw);
-    
+
     return profile;
 }

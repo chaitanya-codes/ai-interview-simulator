@@ -31,6 +31,7 @@ export default function Home() {
       const data = await response.json();
 
       setQuestions(data.questions);
+      setError(null);
     } catch (error) {
       setError("Failed to generate questions");
       console.error(error);
@@ -61,7 +62,7 @@ export default function Home() {
       >
         Generate Questions
       </button>
-      
+
       {error && <p className="text-red-500 mt-4">{error}</p>}
       {loading && (
         <p className="mt-6">

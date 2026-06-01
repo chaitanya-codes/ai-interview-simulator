@@ -2,7 +2,11 @@ export interface ResumeProfile {
   candidateName?: string;
   skills: string[];
   technologies: string[];
-  projects: string[];
+  projects: {
+    name: string;
+    description: string;
+    technologies: string[];
+  }[];
   education?: string;
   experienceLevel: "student" | "junior" | "mid";
   summary: string;
