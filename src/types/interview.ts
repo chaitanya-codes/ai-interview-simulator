@@ -12,14 +12,12 @@ export interface InterviewAnswer {
     timeTaken?: number;
 }
 
-// export interface Feedback {
-//     score: number;
-//     strengths: string[];
-//     weaknesses: string[];
-//     improvement: string;
-//     followUpSuggestions?: string[];
-//     skillGaps?: string[];
-// }
+export interface Feedback {
+    score: number;
+    strengths: string[];
+    weaknesses: string[];
+    improvement: string;
+}
 
 // export interface InterviewSession {
 //     sessionId: string;
