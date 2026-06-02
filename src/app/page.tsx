@@ -40,6 +40,7 @@ export default function Home() {
       setCurrentQuesIndex(0);
       setAnswers([]);
       setFeedback(null);
+      setFeedbacks([]);
       setCurrentAnswer("");
       setError(null);
     } catch (error) {
@@ -105,6 +106,8 @@ export default function Home() {
   }
 
   const averageScore = feedbacks.length > 0 ? Math.round(feedbacks.reduce((total, feedback) => total + feedback.score, 0) / feedbacks.length) : 0;
+  const scoreColor = feedback ? feedback.score >= 80 ? "text-green-600" : feedback.score >= 60 ? "text-yellow-600" : "text-red-600" : "text-slate-600";
+  const averageScoreColor = averageScore >= 80 ? "text-green-600" : averageScore >= 60 ? "text-yellow-600" : "text-red-600";
 
   return (
     <main className="min-h-screen p-6 flex justify-center from-slate-600 to-slate-100 bg-linear-to-tr">
@@ -193,7 +196,7 @@ export default function Home() {
             </div>
 
             {feedback && (
-              <div className="bg-white border rounded-xl p-5 text-black">
+              <div className={`bg-white border rounded-xl p-5 ${scoreColor} shadow-sm`}>
                 <h3 className="font-bold mb-3">Score: {feedback.score}/100</h3>
 
                 <div className="mb-3">
@@ -225,7 +228,7 @@ export default function Home() {
 
             <p className="text-gray-600 mt-2">Questions Answered: {answers.length - answers.filter(a => a.answer === "Skipped").length} / {questions.length}</p>
 
-            <p className="text-3xl font-bold mt-4 text-green-600">{averageScore}/100</p>
+            <p className={`text-3xl font-bold mt-4 ${averageScoreColor}`}>{averageScore}/100</p>
             <p className="text-gray-500">Average Interview Score</p>
           </div>
         )}

@@ -4,13 +4,13 @@ import { ResumeProfile } from "@/types/resume";
 import { z } from "zod";
 
 const QuestionSchema = z.object({
-    type: z.enum(["skill", "technology", "project"]),
+    type: z.enum(["skill", "technology", "project", "system-design"]),
     question: z.string(),
     difficulty: z.enum(["easy", "medium", "hard"]),
 });
 
 const ResponseSchema = z.object({
-    questions: z.array(QuestionSchema),
+    questions: z.array(QuestionSchema).min(5),
 });
 
 export async function generateQuestions(resume: ResumeProfile) {
@@ -56,6 +56,9 @@ ${JSON.stringify(resume, null, 2)}
 
     const completion = await groq.chat.completions.create({
         model: "llama-3.3-70b-versatile",
+        response_format: {
+            type: "json_object"
+        },
         messages: [{
             role: "system",
             content: "You are a senior FAANG-level software engineering interviewer who writes precise, structured interview questions.",
@@ -67,7 +70,10 @@ ${JSON.stringify(resume, null, 2)}
         ]
     });
     
-    const content = completion.choices[0].message.content ?? "";
+    const content = completion.choices[0].message.content;
+    if (!content) {
+        throw new Error("Question generation failed");
+    }
     const parsed = JSON.parse(content);
 
     const result = ResponseSchema.safeParse(parsed);

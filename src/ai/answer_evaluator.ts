@@ -58,5 +58,4 @@ Return ONLY valid JSON:
         console.error("Failed to parse feedback:", error, "Raw response:", raw);
         throw new Error("Invalid feedback format");
     }
-
 }
