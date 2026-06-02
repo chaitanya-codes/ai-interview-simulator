@@ -10,11 +10,7 @@ export async function POST(request: NextRequest) {
         const file = formData.get("resume") as File;
 
         if (!file) {
-            return NextResponse.json({
-                error: "Resume required"
-            }, {
-                status: 400
-            })
+            return NextResponse.json({ error: "Resume required" }, { status: 400 });
         }
 
         const bytes = await file.arrayBuffer();
@@ -24,17 +20,9 @@ export async function POST(request: NextRequest) {
         const profile = await analyzeResume(resumeText);
         const questions = await generateQuestions(profile);
 
-        return NextResponse.json({
-            success: true,
-            questions
-        });
+        return NextResponse.json({ success: true, questions });
     } catch(error) {
         console.error(error);
-
-        return NextResponse.json({
-            error: "Failed to generate questions"
-        }, {
-            status: 500
-        });
+        return NextResponse.json({ error: "Failed to generate questions" }, { status: 500 });
     }
 }

@@ -9,6 +9,7 @@ export default function Home() {
   const [answers, setAnswers] = useState<InterviewAnswer[]>([]);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [currentQuesIndex, setCurrentQuesIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +81,7 @@ export default function Home() {
     const data = await response.json();
 
     setFeedback(data.feedback);
+    setFeedbacks(prev => [...prev, data.feedback]);
     setCurrentAnswer("");
   }
 
@@ -102,17 +104,19 @@ export default function Home() {
     setCurrentQuesIndex(idx => idx + 1);
   }
 
-  return (
-    <main className="min-h-screen bg-gray-50 p-6 flex justify-center">
-      <div className="w-full max-w-3xl">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">AI Interview Simulator</h1>
+  const averageScore = feedbacks.length > 0 ? Math.round(feedbacks.reduce((total, feedback) => total + feedback.score, 0) / feedbacks.length) : 0;
 
-        <p className="text-gray-600 mb-8">Upload your resume and get AI-generated interview questions.</p>
+  return (
+    <main className="min-h-screen p-6 flex justify-center from-slate-600 to-slate-100 bg-linear-to-tr">
+      <div className="w-full max-w-3xl">
+        <h1 className="text-4xl font-bold text-slate-900 mb-2">AI Interview Simulator</h1>
+
+        <p className="text-slate-600 mb-8">Upload your resume and get AI-generated interview questions.</p>
 
         <div className="bg-white border rounded-xl p-6 shadow-sm">
-          <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="block w-full text-sm text-gray-600" />
+          <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="block w-full text-sm text-slate-600" />
 
-          <button onClick={handleUpload} disabled={!file || loading} className="mt-4 w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 disabled:opacity-50">
+          <button onClick={handleUpload} disabled={!file || loading} className="mt-4 w-full bg-black text-white py-2 rounded-lg hover:bg-slate-800 disabled:opacity-50">
             {loading ? "Generating..." : "Generate Questions"}
           </button>
 
@@ -120,24 +124,27 @@ export default function Home() {
         </div>
 
         {loading && (
-          <div className="mt-6 bg-white border rounded-xl p-6 text-center text-gray-600">
+          <div className="mt-6 bg-cyan-300 border rounded-xl p-6 text-center text-slate-600">
             <div className="animate-pulse">Generating interview questions...</div>
           </div>
         )}
 
-        {!loading && !questions && <div className="mt-6 text-center text-gray-500">No questions yet. Upload a resume to begin.</div>}
+        {!loading && !questions && <div className="mt-6 text-center text-slate-500">No questions yet. Upload a resume to begin.</div>}
 
         {questions?.[currentQuesIndex] && (
           <div className="mt-6 space-y-4">
-            <p className="text-sm text-gray-500">
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${((currentQuesIndex + 1) / questions.length) * 100}%` }} />
+            </div>
+            <p className="text-sm text-slate-500">
               Question {currentQuesIndex + 1} of {questions.length}
             </p>
 
             <div className="bg-white border rounded-xl p-5 shadow-sm hover:shadow-md transition">
               <div className="flex justify-between items-start">
-                <p className="font-medium text-gray-900">{currentQuesIndex + 1}. {questions[currentQuesIndex].question}</p>
+                <p className="font-medium text-slate-900">{currentQuesIndex + 1}. {questions[currentQuesIndex].question}</p>
 
-                <span className="text-xs mx-0.5 px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                <span className="text-xs mx-0.5 px-2 py-1 rounded-full bg-slate-100 text-slate-600">
                   {questions[currentQuesIndex].difficulty}
                 </span>
               </div>
@@ -148,7 +155,7 @@ export default function Home() {
             </div>
 
             <div className="bg-white border rounded-xl p-6 shadow-sm">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Your Answer
               </label>
 
@@ -157,18 +164,18 @@ export default function Home() {
                 onChange={(e) => setCurrentAnswer(e.target.value)}
                 disabled={!!feedback}
                 placeholder="Explain your approach in detail..."
-                className="w-full min-h-[180px] rounded-xl border border-gray-300 p-4 text-black resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full min-h-[180px] rounded-xl border border-slate-300 p-4 text-black resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
 
               <div className="flex justify-between items-center mt-4">
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-slate-500">
                   {currentAnswer.length} characters
                 </span>
 
                 <div className="flex gap-3">
                   {!feedback ? (
                     <>
-                      <button onClick={handleSkip} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition">
+                      <button onClick={handleSkip} className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 transition">
                         Skip
                       </button>
 
@@ -214,8 +221,12 @@ export default function Home() {
 
         {questions && currentQuesIndex >= questions.length && (
           <div className="mt-6 bg-white border rounded-xl p-6 text-center">
-            <h2 className="text-2xl font-bold">Interview Complete &#127881;</h2>
-            <p className="text-gray-600 mt-2">You answered {answers.length} questions.</p>
+            <h2 className="text-2xl font-bold text-indigo-400">Interview Complete &#127881;</h2>
+
+            <p className="text-gray-600 mt-2">Questions Answered: {answers.length - answers.filter(a => a.answer === "Skipped").length} / {questions.length}</p>
+
+            <p className="text-3xl font-bold mt-4 text-green-600">{averageScore}/100</p>
+            <p className="text-gray-500">Average Interview Score</p>
           </div>
         )}
       </div>

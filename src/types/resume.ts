@@ -8,7 +8,7 @@ export interface ResumeProfile {
     technologies: string[];
   }[];
   education?: string;
-  experienceLevel: "student" | "junior" | "mid";
+  experienceLevel: "student" | "junior" | "mid" | "system-design";
   summary: string;
 }
 

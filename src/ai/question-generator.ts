@@ -28,8 +28,7 @@ RULES:
 - Vary difficulty based on experienceLevel:
   - student -> mostly easy
   - junior -> easy + medium mix
-  - mid -> include at least one hard
-
+  - mid -> include at least one hard question and consider system design questions
 ---
 
 OUTPUT FORMAT (STRICT JSON ONLY):
@@ -37,7 +36,7 @@ OUTPUT FORMAT (STRICT JSON ONLY):
 {
   "questions": [
     {
-      "type": "skill" | "technology" | "project",
+      "type": "skill" | "technology" | "project"${resume.experienceLevel === "mid" ? ' | "system-design"' : ""},
       "question": string,
       "difficulty": "easy" | "medium" | "hard"
     }
