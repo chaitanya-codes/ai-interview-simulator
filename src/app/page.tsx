@@ -13,6 +13,7 @@ export default function Home() {
   const [currentQuesIndex, setCurrentQuesIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
 
   async function handleUpload() {
     if (!file) return;
@@ -105,6 +106,18 @@ export default function Home() {
     setCurrentQuesIndex(idx => idx + 1);
   }
 
+  
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragging(false);
+
+    const droppedFile = e.dataTransfer.files?.[0];
+
+    if (droppedFile?.type === "application/pdf") {
+      setFile(droppedFile);
+    }
+  }
+
   const averageScore = feedbacks.length > 0 ? Math.round(feedbacks.reduce((total, feedback) => total + feedback.score, 0) / feedbacks.length) : 0;
   const scoreColor = feedback ? feedback.score >= 80 ? "text-green-600" : feedback.score >= 60 ? "text-yellow-600" : "text-red-600" : "text-slate-600";
   const averageScoreColor = averageScore >= 80 ? "text-green-600" : averageScore >= 60 ? "text-yellow-600" : "text-red-600";
@@ -117,9 +130,43 @@ export default function Home() {
         <p className="text-slate-600 mb-8">Upload your resume and get AI-generated interview questions.</p>
 
         <div className="bg-white border rounded-xl p-6 shadow-sm">
-          <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} className="block w-full text-sm text-slate-600" />
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-xl p-10 text-center transition ${dragging
+              ? "border-blue-500 bg-blue-50"
+              : "border-slate-300 bg-white"
+              }`}
+          >
+            <input
+              id="resume-upload"
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
 
-          <button onClick={handleUpload} disabled={!file || loading} className="mt-4 w-full bg-black text-white py-2 rounded-lg hover:bg-slate-800 disabled:opacity-50">
+            <label htmlFor="resume-upload" className="cursor-pointer">
+              {file ? (
+                <div>
+                  <p className="font-medium text-green-600">✓ {file.name}</p>
+                  <p className="text-sm text-slate-500">Click or drop different PDF</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="font-medium text-slate-600">Drag & Drop Resume Here</p>
+                  <p className="text-sm text-slate-500">
+                    or click to browse
+                  </p>
+                </div>
+              )}
+            </label>
+          </div>
+          <button onClick={handleUpload} disabled={!file || loading} hidden={loading} className="mt-4 w-full bg-black text-white py-2 rounded-lg hover:bg-slate-800 disabled:opacity-50">
             {loading ? "Generating..." : "Generate Questions"}
           </button>
 
@@ -137,7 +184,7 @@ export default function Home() {
         {questions?.[currentQuesIndex] && (
           <div className="mt-6 space-y-4">
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${((currentQuesIndex + 1) / questions.length) * 100}%` }} />
+              <div className="bg-blue-600 h-2 rounded-full transition-all duration-2300" style={{ width: `${((currentQuesIndex + 1) / questions.length) * 100}%` }} />
             </div>
             <p className="text-sm text-slate-500">
               Question {currentQuesIndex + 1} of {questions.length}
@@ -167,7 +214,7 @@ export default function Home() {
                 onChange={(e) => setCurrentAnswer(e.target.value)}
                 disabled={!!feedback}
                 placeholder="Explain your approach in detail..."
-                className="w-full min-h-[180px] rounded-xl border border-slate-300 p-4 text-black resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full min-h-45 rounded-xl border border-slate-300 p-4 text-black resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
 
               <div className="flex justify-between items-center mt-4">
