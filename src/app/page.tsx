@@ -106,7 +106,7 @@ export default function Home() {
     setCurrentQuesIndex(idx => idx + 1);
   }
 
-  
+
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setDragging(false);
@@ -118,9 +118,23 @@ export default function Home() {
     }
   }
 
+  function getTopItems(items: string[], count = 3) {
+    const map = new Map<string, number>();
+
+    items.forEach(item => {
+      map.set(item, (map.get(item) ?? 0) + 1);
+    });
+
+    return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, count).map(([item]) => item);
+  }
+
   const averageScore = feedbacks.length > 0 ? Math.round(feedbacks.reduce((total, feedback) => total + feedback.score, 0) / feedbacks.length) : 0;
   const scoreColor = feedback ? feedback.score >= 80 ? "text-green-600" : feedback.score >= 60 ? "text-yellow-600" : "text-red-600" : "text-slate-600";
   const averageScoreColor = averageScore >= 80 ? "text-green-600" : averageScore >= 60 ? "text-yellow-600" : "text-red-600";
+  const allStrengths = feedbacks.flatMap(feedback => feedback.strengths);
+  const allWeaknesses = feedbacks.flatMap(feedback => feedback.weaknesses);
+  const topStrengths = getTopItems(allStrengths);
+  const topWeaknesses = getTopItems(allWeaknesses);
 
   return (
     <main className="min-h-screen p-6 flex justify-center from-slate-600 to-slate-100 bg-linear-to-tr">
@@ -277,6 +291,29 @@ export default function Home() {
 
             <p className={`text-3xl font-bold mt-4 ${averageScoreColor}`}>{averageScore}/100</p>
             <p className="text-gray-500">Average Interview Score</p>
+            <div className="mt-6 text-left">
+              <h3 className="font-bold text-lg mb-2 text-slate-900">
+                Strength Areas
+              </h3>
+
+              <ul className="list-disc ml-5 text-green-600">
+                {topStrengths.map((strength, i) => (
+                  <li key={i}>{strength}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-6 text-left">
+              <h3 className="font-bold text-lg mb-2 text-slate-900">
+                Areas To Improve
+              </h3>
+
+              <ul className="list-disc ml-5 text-red-600">
+                {topWeaknesses.map((weakness, i) => (
+                  <li key={i}>{weakness}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
       </div>
