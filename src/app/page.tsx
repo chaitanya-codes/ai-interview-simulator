@@ -1,7 +1,7 @@
 "use client";
 
 import { Feedback, InterviewAnswer, InterviewQuestion } from "@/types/interview";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -14,6 +14,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [isListening, setIsListening] = useState(false);
 
   async function handleUpload() {
     if (!file) return;
@@ -37,6 +38,7 @@ export default function Home() {
 
       const data = await response.json();
 
+      window.scrollBy({ top: 500, behavior: "smooth" });
       setQuestions(data.questions);
       setCurrentQuesIndex(0);
       setAnswers([]);
@@ -135,6 +137,23 @@ export default function Home() {
   const allWeaknesses = feedbacks.flatMap(feedback => feedback.weaknesses);
   const topStrengths = getTopItems(allStrengths);
   const topWeaknesses = getTopItems(allWeaknesses);
+  const voices = window.speechSynthesis.getVoices();
+
+  useEffect(() => {
+    if (!questions?.[currentQuesIndex]) return;
+
+    const utterance = new SpeechSynthesisUtterance(questions[currentQuesIndex].question);
+    utterance.onstart = () => {
+      window.addEventListener("keydown", e => {
+        if (e.code === "Escape") {
+          window.speechSynthesis.cancel();
+        } else if (e.code === "Space") !window.speechSynthesis.paused ? window.speechSynthesis.pause() : window.speechSynthesis.resume();
+      });
+    }
+    utterance.voice = voices.find(v => v.name.startsWith("Microsoft Zira")) || null;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }, [currentQuesIndex, questions]);
 
   return (
     <main className="min-h-screen p-6 flex justify-center from-slate-600 to-slate-100 bg-linear-to-tr">
