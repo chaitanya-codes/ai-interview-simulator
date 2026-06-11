@@ -1,7 +1,6 @@
 "use client";
 
 import { Feedback, InterviewAnswer, InterviewQuestion } from "@/types/interview";
-import { actionAsyncStorage } from "next/dist/server/app-render/action-async-storage.external";
 import { useState, useEffect, useRef } from "react";
 
 export default function Home() {
@@ -119,7 +118,7 @@ export default function Home() {
         if (updated.length === 0) return updated;
         updated[updated.length - 1] = {
           ...updated[updated.length - 1],
-          score: Math.round((updated[updated.length - 1].score + data.feedback.score) / 2)
+          score: Math.round(updated[updated.length - 1].score * 0.7 + data.feedback.score * 0.3)
         }
         return updated;
       });
@@ -154,7 +153,7 @@ export default function Home() {
       setIsFollowUp(false);
       setFollowUpQuestion(null);
     }
-
+    hasSpokenRef.current = false;
     setFeedback(null);
     setCurrentAnswer("");
     setCurrentQuesIndex(idx => idx + 1);
