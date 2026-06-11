@@ -1,6 +1,7 @@
 "use client";
 
 import { Feedback, InterviewAnswer, InterviewQuestion } from "@/types/interview";
+import { actionAsyncStorage } from "next/dist/server/app-render/action-async-storage.external";
 import { useState, useEffect, useRef } from "react";
 
 export default function Home() {
@@ -19,6 +20,7 @@ export default function Home() {
   const [displayedText, setDisplayedText] = useState("");
   const [followUpQuestion, setFollowUpQuestion] = useState<string | null>(null);
   const [isFollowUp, setIsFollowUp] = useState(false);
+  const hasSpokenRef = useRef(false);
 
   async function handleUpload() {
     if (!file) return;
@@ -62,7 +64,6 @@ export default function Home() {
     if (!questions?.[currentQuesIndex]) return;
 
     const currentQuestion = questions[currentQuesIndex];
-    const questionText = isFollowUp ? followUpQuestion! : currentQuestion.question;
 
     const answer: InterviewAnswer = {
       questionId: currentQuestion.id,
@@ -78,7 +79,7 @@ export default function Home() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        question: questionText,
+        question: activeQuestionText,
         answer: currentAnswer,
       }),
     });
@@ -103,7 +104,7 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          question: questionText,
+          question: activeQuestionText,
           answer: currentAnswer,
         }),
       }
@@ -111,6 +112,7 @@ export default function Home() {
       const followUpData = await followUpResponse.json();
       setFollowUpQuestion(followUpData.question);
       setIsFollowUp(true);
+      hasSpokenRef.current = false;
     } else if (isFollowUp) {
       setFeedbacks(prev => {
         const updated = [...prev];
@@ -134,6 +136,7 @@ export default function Home() {
     setFeedback(null);
     setFollowUpQuestion(null);
     setIsFollowUp(false);
+    hasSpokenRef.current = false;
     setCurrentQuesIndex(idx => idx + 1);
     window.speechSynthesis.cancel();
     if (currentQuesIndex + 1 >= questions!.length) setInterviewState("idle");
@@ -233,21 +236,25 @@ export default function Home() {
   const allWeaknesses = feedbacks.flatMap(feedback => feedback.weaknesses);
   const topStrengths = getTopItems(allStrengths);
   const topWeaknesses = getTopItems(allWeaknesses);
+  const activeQuestionText = isFollowUp ? followUpQuestion : questions?.[currentQuesIndex]?.question;
 
   useEffect(() => {
     if (!questions?.[currentQuesIndex]) return;
     setDisplayedText("");
     let interval: NodeJS.Timeout;
-    const questionText = isFollowUp ? followUpQuestion! : questions[currentQuesIndex].question;
-    if (!questionText) return;
-    const utterance = new SpeechSynthesisUtterance(questionText);
+
+    if (!activeQuestionText) return;
+    if (hasSpokenRef.current) return;
+    hasSpokenRef.current = true;
+
+    const utterance = new SpeechSynthesisUtterance(activeQuestionText);
     utterance.onstart = () => {
       let i = 0;
       interval = setInterval(() => {
         i++;
-        setDisplayedText(questionText.slice(0, i));
-        if (i >= questionText.length) clearInterval(interval);
-      }, 50 + (Math.random() * 15));
+        setDisplayedText(activeQuestionText.slice(0, i));
+        if (i >= activeQuestionText.length) clearInterval(interval);
+      }, 40 + (Math.random() * 15));
       setInterviewState("speaking");
     }
     utterance.onend = () => {
@@ -261,6 +268,7 @@ export default function Home() {
     utterance.voice = voices.find(v => v.name.startsWith("Microsoft Zira")) || null;
     window.speechSynthesis.cancel();
     utterance.volume = 0.6;
+    utterance.rate = 1.8;
     window.speechSynthesis.speak(utterance);
     return () => {
       clearInterval(interval);
@@ -358,7 +366,7 @@ export default function Home() {
                   <div className={`ai-orb ${interviewState === "speaking" ? "speaking" : interviewState === "listening" ? "listening" : ""}`} />
                 </div>
                 <p className="font-medium text-slate-900">
-                  {isFollowUp ? `Follow-up: ${displayedText}` : `${currentQuesIndex + 1}. ${displayedText}`}
+                  {displayedText ? isFollowUp ? `Follow-up: ${displayedText}` : `${currentQuesIndex + 1}. ${displayedText}` : ""}
                   <span className="text-blue-500 font-light">▋</span>
                 </p>
               </div>
@@ -398,11 +406,11 @@ export default function Home() {
                         </button>
                       </>
                     ) : (isFollowUp ? (
-                      <button onClick={() => {
+                      <button disabled={!currentAnswer.trim()} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition" onClick={() => {
                         setIsFollowUp(false);
                         setFollowUpQuestion(null);
-                        setFeedback(null);
-                        setCurrentAnswer("");
+                        hasSpokenRef.current = true;
+                        window.scrollBy({ top: 800, behavior: "smooth" });
                       }}>
                         Follow Up &rarr;
                       </button>
