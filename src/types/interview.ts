@@ -8,6 +8,7 @@ export interface InterviewQuestion {
 
 export interface InterviewAnswer {
     questionId: string;
+    isFollowUp?: boolean;
     answer: string;
     timeTaken?: number;
 }

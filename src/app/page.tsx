@@ -1,7 +1,7 @@
 "use client";
 
 import { Feedback, InterviewAnswer, InterviewQuestion } from "@/types/interview";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -14,7 +14,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [isListening, setIsListening] = useState(false);
+  const [interviewState, setInterviewState] = useState<"speaking" | "listening" | "idle">("idle");
+  const [blobIntensity, setBlobIntensity] = useState(0);
+  const [displayedText, setDisplayedText] = useState("");
+  const [followUpQuestion, setFollowUpQuestion] = useState<string | null>(null);
+  const [isFollowUp, setIsFollowUp] = useState(false);
 
   async function handleUpload() {
     if (!file) return;
@@ -38,7 +42,7 @@ export default function Home() {
 
       const data = await response.json();
 
-      window.scrollBy({ top: 500, behavior: "smooth" });
+      window.scrollTo({ top: 400, behavior: "smooth" });
       setQuestions(data.questions);
       setCurrentQuesIndex(0);
       setAnswers([]);
@@ -58,9 +62,11 @@ export default function Home() {
     if (!questions?.[currentQuesIndex]) return;
 
     const currentQuestion = questions[currentQuesIndex];
+    const questionText = isFollowUp ? followUpQuestion! : currentQuestion.question;
 
     const answer: InterviewAnswer = {
       questionId: currentQuestion.id,
+      isFollowUp,
       answer: currentAnswer,
     };
 
@@ -72,7 +78,7 @@ export default function Home() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        question: currentQuestion.question,
+        question: questionText,
         answer: currentAnswer,
       }),
     });
@@ -84,14 +90,53 @@ export default function Home() {
 
     const data = await response.json();
 
-    setFeedback(data.feedback);
-    setFeedbacks(prev => [...prev, data.feedback]);
+    const generateFollowUp = true //Math.random() < 0.7;
+    if (!isFollowUp) {
+      setFeedback(data.feedback);
+      setFeedbacks(prev => [...prev, data.feedback]);
+    }
+
+    if (!isFollowUp && generateFollowUp) { // && data.feedback.score >= 40
+      const followUpResponse = await fetch("/api/generate_followup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question: questionText,
+          answer: currentAnswer,
+        }),
+      }
+      );
+      const followUpData = await followUpResponse.json();
+      setFollowUpQuestion(followUpData.question);
+      setIsFollowUp(true);
+    } else if (isFollowUp) {
+      setFeedbacks(prev => {
+        const updated = [...prev];
+        if (updated.length === 0) return updated;
+        updated[updated.length - 1] = {
+          ...updated[updated.length - 1],
+          score: Math.round((updated[updated.length - 1].score + data.feedback.score) / 2)
+        }
+        return updated;
+      });
+      setTimeout(() => {
+        handleNextQuestion();
+      }, 2000);
+    }
+
     setCurrentAnswer("");
+    stopListening();
   }
 
   function handleNextQuestion() {
     setFeedback(null);
+    setFollowUpQuestion(null);
+    setIsFollowUp(false);
     setCurrentQuesIndex(idx => idx + 1);
+    window.speechSynthesis.cancel();
+    if (currentQuesIndex + 1 >= questions!.length) setInterviewState("idle");
   }
 
   function handleSkip() {
@@ -102,12 +147,16 @@ export default function Home() {
       answer: "Skipped",
     },
     ]);
+    if (isFollowUp) {
+      setIsFollowUp(false);
+      setFollowUpQuestion(null);
+    }
 
     setFeedback(null);
     setCurrentAnswer("");
     setCurrentQuesIndex(idx => idx + 1);
+    window.speechSynthesis.cancel();
   }
-
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -129,6 +178,53 @@ export default function Home() {
 
     return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, count).map(([item]) => item);
   }
+  const recognitionRef = useRef<any>(null);
+
+  function startListening() {
+    const SpeechRecognition = (window as any)?.SpeechRecognition || (window as any)?.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser");
+      return;
+    }
+
+    if (!recognitionRef.current) {
+      const recognition = new SpeechRecognition();
+
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      recognition.onstart = () => {
+        setInterviewState("listening");
+      };
+
+      recognition.onend = () => {
+        setInterviewState("idle");
+      };
+
+      recognition.onerror = (e: any) => {
+        console.error(e);
+        setInterviewState("idle");
+      };
+
+      recognition.onresult = (event: any) => {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setCurrentAnswer(prev => prev + transcript);
+      };
+
+      recognitionRef.current = recognition;
+    }
+    try {
+      recognitionRef.current.start();
+    } catch { }
+  }
+  function stopListening() {
+    recognitionRef.current?.stop();
+  }
 
   const averageScore = feedbacks.length > 0 ? Math.round(feedbacks.reduce((total, feedback) => total + feedback.score, 0) / feedbacks.length) : 0;
   const scoreColor = feedback ? feedback.score >= 80 ? "text-green-600" : feedback.score >= 60 ? "text-yellow-600" : "text-red-600" : "text-slate-600";
@@ -137,23 +233,55 @@ export default function Home() {
   const allWeaknesses = feedbacks.flatMap(feedback => feedback.weaknesses);
   const topStrengths = getTopItems(allStrengths);
   const topWeaknesses = getTopItems(allWeaknesses);
-  const voices = window.speechSynthesis.getVoices();
 
   useEffect(() => {
     if (!questions?.[currentQuesIndex]) return;
-
-    const utterance = new SpeechSynthesisUtterance(questions[currentQuesIndex].question);
+    setDisplayedText("");
+    let interval: NodeJS.Timeout;
+    const questionText = isFollowUp ? followUpQuestion! : questions[currentQuesIndex].question;
+    if (!questionText) return;
+    const utterance = new SpeechSynthesisUtterance(questionText);
     utterance.onstart = () => {
-      window.addEventListener("keydown", e => {
-        if (e.code === "Escape") {
-          window.speechSynthesis.cancel();
-        } else if (e.code === "Space") !window.speechSynthesis.paused ? window.speechSynthesis.pause() : window.speechSynthesis.resume();
-      });
+      let i = 0;
+      interval = setInterval(() => {
+        i++;
+        setDisplayedText(questionText.slice(0, i));
+        if (i >= questionText.length) clearInterval(interval);
+      }, 50 + (Math.random() * 15));
+      setInterviewState("speaking");
     }
+    utterance.onend = () => {
+      setInterviewState("listening");
+      startListening();
+    }
+    utterance.onboundary = (e) => {
+      setBlobIntensity(Math.random());
+    };
+    const voices = window?.speechSynthesis.getVoices();
     utterance.voice = voices.find(v => v.name.startsWith("Microsoft Zira")) || null;
     window.speechSynthesis.cancel();
+    utterance.volume = 0.6;
     window.speechSynthesis.speak(utterance);
-  }, [currentQuesIndex, questions]);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [currentQuesIndex, questions, isFollowUp, followUpQuestion]);
+
+  useEffect(() => {
+    window.scrollBy({ top: window.innerHeight * 0.6, behavior: "smooth" });
+  }, [interviewState]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.code === "Escape") window.speechSynthesis.cancel();
+      if (e.code.toLowerCase() === "p") {
+        e.preventDefault();
+        window.speechSynthesis.paused ? window.speechSynthesis.resume() : window.speechSynthesis.pause();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   return (
     <main className="min-h-screen p-6 flex justify-center from-slate-600 to-slate-100 bg-linear-to-tr">
@@ -162,49 +290,49 @@ export default function Home() {
 
         <p className="text-slate-600 mb-8">Upload your resume and get AI-generated interview questions.</p>
 
-        <div className="bg-white border rounded-xl p-6 shadow-sm">
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-xl p-10 text-center transition ${dragging
-              ? "border-blue-500 bg-blue-50"
-              : "border-slate-300 bg-white"
-              }`}
-          >
-            <input
-              id="resume-upload"
-              type="file"
-              accept=".pdf"
-              className="hidden"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-            />
+        {!questions && (
+          <div className="bg-white border rounded-xl p-6 shadow-sm">
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-xl p-10 text-center transition ${dragging
+                ? "border-blue-500 bg-blue-50"
+                : "border-slate-300 bg-white"
+                }`}
+            >
+              <input
+                id="resume-upload"
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+              />
 
-            <label htmlFor="resume-upload" className="cursor-pointer">
-              {file ? (
-                <div>
-                  <p className="font-medium text-green-600">✓ {file.name}</p>
-                  <p className="text-sm text-slate-500">Click or drop different PDF</p>
-                </div>
-              ) : (
-                <div>
-                  <p className="font-medium text-slate-600">Drag & Drop Resume Here</p>
-                  <p className="text-sm text-slate-500">
-                    or click to browse
-                  </p>
-                </div>
-              )}
-            </label>
+              <label htmlFor="resume-upload" className="cursor-pointer">
+                {file ? (
+                  <div>
+                    <p className="font-medium text-green-600">&#10003; {file.name}</p>
+                    <p className="text-sm text-slate-500">Click or drop different PDF</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="font-medium text-slate-600">Drag & Drop Resume Here</p>
+                    <p className="text-sm text-slate-500">or click to browse</p>
+                  </div>
+                )}
+              </label>
+            </div>
+            <button onClick={handleUpload} disabled={!file || loading} hidden={loading} className="mt-4 w-full bg-black text-white py-2 rounded-lg hover:bg-slate-800 disabled:opacity-50">
+              {loading ? "Generating..." : "Generate Questions"}
+            </button>
+
+            {error && <p className="text-red-500 mt-3 text-sm">{error}</p>}
           </div>
-          <button onClick={handleUpload} disabled={!file || loading} hidden={loading} className="mt-4 w-full bg-black text-white py-2 rounded-lg hover:bg-slate-800 disabled:opacity-50">
-            {loading ? "Generating..." : "Generate Questions"}
-          </button>
-
-          {error && <p className="text-red-500 mt-3 text-sm">{error}</p>}
-        </div>
+        )}
 
         {loading && (
           <div className="mt-6 bg-cyan-300 border rounded-xl p-6 text-center text-slate-600">
@@ -212,70 +340,83 @@ export default function Home() {
           </div>
         )}
 
-        {!loading && !questions && <div className="mt-6 text-center text-slate-500">No questions yet. Upload a resume to begin.</div>}
+        {!loading && !questions && <div className="mt-6 text-center text-slate-100">No questions yet. Upload a resume to begin.</div>}
 
         {questions?.[currentQuesIndex] && (
           <div className="mt-6 space-y-4">
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div className="bg-blue-600 h-2 rounded-full transition-all duration-2300" style={{ width: `${((currentQuesIndex + 1) / questions.length) * 100}%` }} />
             </div>
-            <p className="text-sm text-slate-500">
-              Question {currentQuesIndex + 1} of {questions.length}
+            <p className="text-sm text-slate-500 inline">
+              Question {currentQuesIndex + 1} / {questions.length}
             </p>
 
             <div className="bg-white border rounded-xl p-5 shadow-sm hover:shadow-md transition">
-              <div className="flex justify-between items-start">
-                <p className="font-medium text-slate-900">{currentQuesIndex + 1}. {questions[currentQuesIndex].question}</p>
-
+              <div className="flex flex-col items-center">
+                <p className="mb-3 text-xs uppercase tracking-wider text-slate-400">AI Interviewer</p>
+                <div style={{ transform: `scale(${0.8 + blobIntensity * 0.25})`, transition: "transform 120ms linear" }}>
+                  <div className={`ai-orb ${interviewState === "speaking" ? "speaking" : interviewState === "listening" ? "listening" : ""}`} />
+                </div>
+                <p className="font-medium text-slate-900">
+                  {isFollowUp ? `Follow-up: ${displayedText}` : `${currentQuesIndex + 1}. ${displayedText}`}
+                  <span className="text-blue-500 font-light">▋</span>
+                </p>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className={`inline-block mt-2 text-xs px-2 py-1 rounded-full capitalize ${questions[currentQuesIndex].type === "skill" ? "bg-blue-100 text-blue-700" : questions[currentQuesIndex].type === "technology" ? "bg-green-100 text-green-700" : "bg-purple-100 text-purple-700"}`}>
+                  {questions[currentQuesIndex].type}
+                </span>
                 <span className="text-xs mx-0.5 px-2 py-1 rounded-full bg-slate-100 text-slate-600">
                   {questions[currentQuesIndex].difficulty}
                 </span>
               </div>
-
-              <span className={`inline-block mt-2 text-xs px-2 py-1 rounded-full capitalize ${questions[currentQuesIndex].type === "skill" ? "bg-blue-100 text-blue-700" : questions[currentQuesIndex].type === "technology" ? "bg-green-100 text-green-700" : "bg-purple-100 text-purple-700"}`}>
-                {questions[currentQuesIndex].type}
-              </span>
             </div>
+            {interviewState !== "speaking" && (
+              <div className="bg-white border rounded-xl p-5 shadow-sm">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Your Answer</label>
+                <textarea
+                  value={currentAnswer}
+                  onChange={(e) => setCurrentAnswer(e.target.value)}
+                  disabled={!!feedback && !isFollowUp}
+                  placeholder="Explain your approach in detail..."
+                  className="w-full min-h-45 rounded-xl border border-slate-300 p-4 text-black resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  autoFocus
+                />
+                <div className="flex justify-between items-center mt-4">
+                  <span className="text-sm text-slate-500">
+                    {currentAnswer.length} characters
+                  </span>
 
-            <div className="bg-white border rounded-xl p-6 shadow-sm">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Your Answer
-              </label>
-
-              <textarea
-                value={currentAnswer}
-                onChange={(e) => setCurrentAnswer(e.target.value)}
-                disabled={!!feedback}
-                placeholder="Explain your approach in detail..."
-                className="w-full min-h-45 rounded-xl border border-slate-300 p-4 text-black resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-
-              <div className="flex justify-between items-center mt-4">
-                <span className="text-sm text-slate-500">
-                  {currentAnswer.length} characters
-                </span>
-
-                <div className="flex gap-3">
-                  {!feedback ? (
-                    <>
-                      <button onClick={handleSkip} className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 transition">
-                        Skip
+                  <div className="flex gap-3">
+                    {!feedback ? (
+                      <>
+                        <button onClick={handleSkip} className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 transition">
+                          Skip
+                        </button>
+                        <button onClick={handleSubmitAnswer} disabled={!currentAnswer.trim()} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                          Submit Answer
+                        </button>
+                      </>
+                    ) : (isFollowUp ? (
+                      <button onClick={() => {
+                        setIsFollowUp(false);
+                        setFollowUpQuestion(null);
+                        setFeedback(null);
+                        setCurrentAnswer("");
+                      }}>
+                        Follow Up &rarr;
                       </button>
-
-                      <button onClick={handleSubmitAnswer} disabled={!currentAnswer.trim()} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition">
-                        Submit Answer
+                    ) : (
+                      <button onClick={handleNextQuestion} className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition">
+                        Next Question &rarr;
                       </button>
-                    </>
-                  ) : (
-                    <button onClick={handleNextQuestion} className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition">
-                      Next Question &rarr;
-                    </button>
-                  )}
+                    )
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {feedback && (
+            )}
+            {(feedback && !isFollowUp) && (
               <div className={`bg-white border rounded-xl p-5 ${scoreColor} shadow-sm`}>
                 <h3 className="font-bold mb-3">Score: {feedback.score}/100</h3>
 
@@ -333,9 +474,12 @@ export default function Home() {
                 ))}
               </ul>
             </div>
+            <div>
+              <button className="bg-lime-600 hover:bg-lime-700 p-2 border border-amber-400 rounded-2xl" onClick={() => window.location.reload()}>Start over</button>
+            </div>
           </div>
         )}
       </div>
-    </main>
+    </main >
   );
 }

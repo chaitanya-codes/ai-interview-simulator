@@ -18,7 +18,7 @@ export const ResumeProfileSchema = z.object({
         "student",
         "junior",
         "mid",
-    ]),
+    ]).catch("student"),
     summary: z.string(),
 });
 
