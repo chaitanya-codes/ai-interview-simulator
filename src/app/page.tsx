@@ -90,13 +90,13 @@ export default function Home() {
 
     const data = await response.json();
 
-    const generateFollowUp = true //Math.random() < 0.7;
+    const generateFollowUp = Math.random() < 0.7;
     if (!isFollowUp) {
       setFeedback(data.feedback);
       setFeedbacks(prev => [...prev, data.feedback]);
     }
 
-    if (!isFollowUp && generateFollowUp) { // && data.feedback.score >= 40
+    if (!isFollowUp && generateFollowUp) {
       const followUpResponse = await fetch("/api/generate_followup", {
         method: "POST",
         headers: {
@@ -253,7 +253,7 @@ export default function Home() {
         i++;
         setDisplayedText(activeQuestionText.slice(0, i));
         if (i >= activeQuestionText.length) clearInterval(interval);
-      }, 40 + (Math.random() * 15));
+      }, 45 + (Math.random() * 15));
       setInterviewState("speaking");
     }
     utterance.onend = () => {
@@ -267,7 +267,7 @@ export default function Home() {
     utterance.voice = voices.find(v => v.name.startsWith("Microsoft Zira")) || null;
     window.speechSynthesis.cancel();
     utterance.volume = 0.6;
-    utterance.rate = 1.8;
+    utterance.rate = 1.5;
     window.speechSynthesis.speak(utterance);
     return () => {
       clearInterval(interval);
