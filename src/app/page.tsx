@@ -4,6 +4,8 @@ import { Feedback, InterviewAnswer, InterviewQuestion } from "@/types/interview"
 import { useState, useEffect, useRef } from "react";
 import ResumeAnalysisCard from "./components/ResumeAnalysisCard";
 import { ResumeProfile } from "@/types/resume";
+import ResumeUploader from "./components/ResumeUploader";
+import InterviewResults from "./components/InterviewResults";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -303,47 +305,7 @@ export default function Home() {
         <p className="text-slate-600 mb-8">Upload your resume and get AI-generated interview questions.</p>
 
         {!questions && (
-          <div className="bg-white border rounded-xl p-10 shadow-sm max-w-3xl mx-auto">
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragging(true);
-              }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-xl p-10 text-center transition ${dragging
-                ? "border-blue-500 bg-blue-50"
-                : "border-slate-300 bg-white"
-                }`}
-            >
-              <input
-                id="resume-upload"
-                type="file"
-                accept=".pdf"
-                className="hidden"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-              />
-
-              <label htmlFor="resume-upload" className="cursor-pointer">
-                {file ? (
-                  <div>
-                    <p className="font-medium text-green-600">&#10003; {file.name}</p>
-                    <p className="text-sm text-slate-500">Click or drop different PDF</p>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="font-medium text-slate-600">Drag & Drop Resume Here</p>
-                    <p className="text-sm text-slate-500">or click to browse</p>
-                  </div>
-                )}
-              </label>
-            </div>
-            <button onClick={handleUpload} disabled={!file || loading} hidden={loading} className="mt-4 w-full bg-black text-white py-2 rounded-lg hover:bg-slate-800 disabled:opacity-50">
-              {loading ? "Analyzing..." : "Analyze Resume"}
-            </button>
-
-            {error && <p className="text-red-500 mt-3 text-sm">{error}</p>}
-          </div>
+          <ResumeUploader file={file} setFile={setFile} onDrop={handleDrop} onUpload={handleUpload} dragging={dragging} setDragging={setDragging} error={error} loading={loading} />
         )}
 
         {loading && (
@@ -460,40 +422,7 @@ export default function Home() {
         )}
 
         {questions && currentQuesIndex >= questions.length && (
-          <div className="mt-6 bg-white border rounded-xl p-6 text-center">
-            <h2 className="text-2xl font-bold text-indigo-400">Interview Complete &#127881;</h2>
-
-            <p className="text-gray-600 mt-2">Questions Answered: {answers.length - answers.filter(a => a.answer === "Skipped").length} / {questions.length}</p>
-
-            <p className={`text-3xl font-bold mt-4 ${averageScoreColor}`}>{averageScore}/100</p>
-            <p className="text-gray-500">Average Interview Score</p>
-            <div className="mt-6 text-left">
-              <h3 className="font-bold text-lg mb-2 text-slate-900">
-                Strength Areas
-              </h3>
-
-              <ul className="list-disc ml-5 text-green-600">
-                {topStrengths.map((strength, i) => (
-                  <li key={i}>{strength}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="mt-6 text-left">
-              <h3 className="font-bold text-lg mb-2 text-slate-900">
-                Areas To Improve
-              </h3>
-
-              <ul className="list-disc ml-5 text-red-600">
-                {topWeaknesses.map((weakness, i) => (
-                  <li key={i}>{weakness}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <button className="bg-lime-600 hover:bg-lime-700 p-2 border border-amber-400 rounded-2xl" onClick={() => window.location.reload()}>Start over</button>
-            </div>
-          </div>
+          <InterviewResults answers={answers} averageScore={averageScore} averageScoreColor={averageScoreColor} questions={questions} topStrengths={topStrengths} topWeaknesses={topWeaknesses}/>
         )}
       </div>
     </main >
