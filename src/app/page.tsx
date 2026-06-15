@@ -26,6 +26,7 @@ export default function Home() {
   const [resumeProfile, setResumeProfile] = useState<ResumeProfile | null>(null);
   const [interviewStarted, setInterviewStarted] = useState(false);
   const hasSpokenRef = useRef(false);
+  const transcriptRef = useRef("");
 
   async function handleUpload() {
     if (!file) return;
@@ -97,7 +98,7 @@ export default function Home() {
 
     const data = await response.json();
 
-    const generateFollowUp = Math.random() < 0.7;
+    const generateFollowUp = Math.random() < 0.65;
     if (!isFollowUp) {
       setFeedback(data.feedback);
       setFeedbacks(prev => [...prev, data.feedback]);
@@ -116,6 +117,8 @@ export default function Home() {
       }
       );
       const followUpData = await followUpResponse.json();
+      setCurrentAnswer("");
+      transcriptRef.current = "";
       setFollowUpQuestion(followUpData.question);
       setIsFollowUp(true);
       hasSpokenRef.current = false;
@@ -142,6 +145,8 @@ export default function Home() {
     setFeedback(null);
     setFollowUpQuestion(null);
     setIsFollowUp(false);
+    setCurrentAnswer("");
+    transcriptRef.current = "";
     hasSpokenRef.current = false;
     setCurrentQuesIndex(idx => idx + 1);
     window.speechSynthesis.cancel();
@@ -218,13 +223,15 @@ export default function Home() {
       };
 
       recognition.onresult = (event: any) => {
-        let transcript = "";
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            transcriptRef.current +=
+              event.results[i][0].transcript + " ";
+          }
         }
-        setCurrentAnswer(transcript);
-      };
 
+        setCurrentAnswer(transcriptRef.current);
+      };
       recognitionRef.current = recognition;
     }
     try {
@@ -317,7 +324,7 @@ export default function Home() {
         {!loading && !questions && <div className="mt-6 text-center text-slate-100">No questions yet. Upload a resume to begin.</div>}
 
         {resumeProfile && !interviewStarted && (
-          <ResumeAnalysisCard profile={resumeProfile} onStart={() => setInterviewStarted(true)}/>
+          <ResumeAnalysisCard profile={resumeProfile} onStart={() => setInterviewStarted(true)} />
         )}
 
         {interviewStarted && questions?.[currentQuesIndex] && (
@@ -422,7 +429,7 @@ export default function Home() {
         )}
 
         {questions && currentQuesIndex >= questions.length && (
-          <InterviewResults answers={answers} averageScore={averageScore} averageScoreColor={averageScoreColor} questions={questions} topStrengths={topStrengths} topWeaknesses={topWeaknesses}/>
+          <InterviewResults answers={answers} averageScore={averageScore} averageScoreColor={averageScoreColor} questions={questions} topStrengths={topStrengths} topWeaknesses={topWeaknesses} />
         )}
       </div>
     </main >
