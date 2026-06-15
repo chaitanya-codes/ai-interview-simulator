@@ -7,9 +7,12 @@ export interface ResumeProfile {
     description: string;
     technologies: string[];
   }[];
-  education?: string;
+  education?: string[];
   experienceLevel: "student" | "junior" | "mid" | "system-design";
   summary: string;
+  score: number;
+  strengths: string[];
+  weaknesses: string[];
 }
 
 export interface Project {

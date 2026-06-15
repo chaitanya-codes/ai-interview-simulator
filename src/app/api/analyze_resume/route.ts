@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
         const profile = await analyzeResume(resumeText);
         const questions = await generateQuestions(profile);
 
-        return NextResponse.json({ success: true, questions });
+        return NextResponse.json({ success: true, questions, profile });
     } catch(error) {
         console.error(error);
         return NextResponse.json({ error: "Failed to generate questions" }, { status: 500 });

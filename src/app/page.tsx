@@ -2,6 +2,8 @@
 
 import { Feedback, InterviewAnswer, InterviewQuestion } from "@/types/interview";
 import { useState, useEffect, useRef } from "react";
+import ResumeAnalysisCard from "./components/ResumeAnalysisCard";
+import { ResumeProfile } from "@/types/resume";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -19,6 +21,8 @@ export default function Home() {
   const [displayedText, setDisplayedText] = useState("");
   const [followUpQuestion, setFollowUpQuestion] = useState<string | null>(null);
   const [isFollowUp, setIsFollowUp] = useState(false);
+  const [resumeProfile, setResumeProfile] = useState<ResumeProfile | null>(null);
+  const [interviewStarted, setInterviewStarted] = useState(false);
   const hasSpokenRef = useRef(false);
 
   async function handleUpload() {
@@ -44,6 +48,7 @@ export default function Home() {
       const data = await response.json();
 
       window.scrollTo({ top: 400, behavior: "smooth" });
+      setResumeProfile(data.profile);
       setQuestions(data.questions);
       setCurrentQuesIndex(0);
       setAnswers([]);
@@ -215,7 +220,7 @@ export default function Home() {
         for (let i = event.resultIndex; i < event.results.length; i++) {
           transcript += event.results[i][0].transcript;
         }
-        setCurrentAnswer(prev => prev + transcript);
+        setCurrentAnswer(transcript);
       };
 
       recognitionRef.current = recognition;
@@ -238,7 +243,7 @@ export default function Home() {
   const activeQuestionText = isFollowUp ? followUpQuestion : questions?.[currentQuesIndex]?.question;
 
   useEffect(() => {
-    if (!questions?.[currentQuesIndex]) return;
+    if (!questions?.[currentQuesIndex] || !interviewStarted) return;
     setDisplayedText("");
     let interval: NodeJS.Timeout;
 
@@ -272,7 +277,7 @@ export default function Home() {
     return () => {
       clearInterval(interval);
     };
-  }, [currentQuesIndex, questions, isFollowUp, followUpQuestion]);
+  }, [currentQuesIndex, questions, isFollowUp, followUpQuestion, interviewStarted]);
 
   useEffect(() => {
     window.scrollBy({ top: window.innerHeight * 0.6, behavior: "smooth" });
@@ -292,13 +297,13 @@ export default function Home() {
 
   return (
     <main className="min-h-screen p-6 flex justify-center from-slate-600 to-slate-100 bg-linear-to-tr">
-      <div className="w-full max-w-3xl">
+      <div className="w-full max-w-6xl">
         <h1 className="text-4xl font-bold text-slate-900 mb-2">AI Interview Simulator</h1>
 
         <p className="text-slate-600 mb-8">Upload your resume and get AI-generated interview questions.</p>
 
         {!questions && (
-          <div className="bg-white border rounded-xl p-6 shadow-sm">
+          <div className="bg-white border rounded-xl p-10 shadow-sm max-w-3xl mx-auto">
             <div
               onDragOver={(e) => {
                 e.preventDefault();
@@ -334,7 +339,7 @@ export default function Home() {
               </label>
             </div>
             <button onClick={handleUpload} disabled={!file || loading} hidden={loading} className="mt-4 w-full bg-black text-white py-2 rounded-lg hover:bg-slate-800 disabled:opacity-50">
-              {loading ? "Generating..." : "Generate Questions"}
+              {loading ? "Analyzing..." : "Analyze Resume"}
             </button>
 
             {error && <p className="text-red-500 mt-3 text-sm">{error}</p>}
@@ -342,15 +347,19 @@ export default function Home() {
         )}
 
         {loading && (
-          <div className="mt-6 bg-cyan-300 border rounded-xl p-6 text-center text-slate-600">
-            <div className="animate-pulse">Generating interview questions...</div>
+          <div className="mt-6 bg-cyan-300 border rounded-xl p-6 text-center text-slate-600 max-w-3xl mx-auto">
+            <div className="animate-pulse">Analyzing resume...</div>
           </div>
         )}
 
         {!loading && !questions && <div className="mt-6 text-center text-slate-100">No questions yet. Upload a resume to begin.</div>}
 
-        {questions?.[currentQuesIndex] && (
-          <div className="mt-6 space-y-4">
+        {resumeProfile && !interviewStarted && (
+          <ResumeAnalysisCard profile={resumeProfile} onStart={() => setInterviewStarted(true)}/>
+        )}
+
+        {interviewStarted && questions?.[currentQuesIndex] && (
+          <div className="mt-6 space-y-4 max-w-4xl mx-auto">
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div className="bg-blue-600 h-2 rounded-full transition-all duration-2300" style={{ width: `${((currentQuesIndex + 1) / questions.length) * 100}%` }} />
             </div>
@@ -362,7 +371,7 @@ export default function Home() {
               <div className="flex flex-col items-center">
                 <p className="mb-3 text-xs uppercase tracking-wider text-slate-400">AI Interviewer</p>
                 <div style={{ transform: `scale(${0.8 + blobIntensity * 0.25})`, transition: "transform 120ms linear" }}>
-                  <div className={`ai-orb ${interviewState === "speaking" ? "speaking" : interviewState === "listening" ? "listening" : ""}`} />
+                  <div className={`ai-orb mb-5 ${interviewState === "speaking" ? "speaking" : interviewState === "listening" ? "listening" : ""}`} />
                 </div>
                 <p className="font-medium text-slate-900">
                   {displayedText ? isFollowUp ? `Follow-up: ${displayedText}` : `${currentQuesIndex + 1}. ${displayedText}` : ""}
