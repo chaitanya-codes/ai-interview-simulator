@@ -243,8 +243,8 @@ export default function Home() {
   }
 
   const averageScore = feedbacks.length > 0 ? Math.round(feedbacks.reduce((total, feedback) => total + feedback.score, 0) / feedbacks.length) : 0;
-  const scoreColor = feedback ? feedback.score >= 80 ? "text-green-600" : feedback.score >= 60 ? "text-yellow-600" : "text-red-600" : "text-slate-600";
-  const averageScoreColor = averageScore >= 80 ? "text-green-600" : averageScore >= 60 ? "text-yellow-600" : "text-red-600";
+  const scoreColor = feedback ? feedback.score >= 80 ? "text-cyan-400" : feedback.score >= 60 ? "text-yellow-400" : "text-red-400" : "text-slate-400";
+  const averageScoreColor = averageScore >= 80 ? "text-cyan-400" : averageScore >= 60 ? "text-yellow-400" : "text-red-400";
   const allStrengths = feedbacks.flatMap(feedback => feedback.strengths);
   const allWeaknesses = feedbacks.flatMap(feedback => feedback.weaknesses);
   const topStrengths = getTopItems(allStrengths);
@@ -305,133 +305,132 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen p-6 flex justify-center from-slate-600 to-slate-100 bg-linear-to-tr">
-      <div className="w-full max-w-6xl">
-        <h1 className="text-4xl font-bold text-slate-900 mb-2">AI Interview Simulator</h1>
+    <main className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 p-6 flex justify-center">      <div className="w-full max-w-6xl">
+      <h1 className="mb-2 text-4xl font-bold bg-linear-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">AI Interview Simulator</h1>
 
-        <p className="text-slate-600 mb-8">Upload your resume and get AI-generated interview questions.</p>
+      <p className="mb-8 text-slate-400">Upload your resume and get AI-generated interview questions.</p>
 
-        {!questions && (
-          <ResumeUploader file={file} setFile={setFile} onDrop={handleDrop} onUpload={handleUpload} dragging={dragging} setDragging={setDragging} error={error} loading={loading} />
-        )}
+      {!questions && (
+        <ResumeUploader file={file} setFile={setFile} onDrop={handleDrop} onUpload={handleUpload} dragging={dragging} setDragging={setDragging} error={error} loading={loading} />
+      )}
 
-        {loading && (
-          <div className="mt-6 bg-cyan-300 border rounded-xl p-6 text-center text-slate-600 max-w-3xl mx-auto">
-            <div className="animate-pulse">Analyzing resume...</div>
+      {loading && (
+        <div className="mt-6 max-w-3xl mx-auto rounded-2xl border border-cyan-500/20 bg-slate-900/80 p-6 text-center text-cyan-300 backdrop-blur-xl">
+          <div className="animate-pulse">Analyzing resume...</div>
+        </div>
+      )}
+
+      {!loading && !questions && <div className="mt-6 text-center text-slate-100">No questions yet. Upload a resume to begin.</div>}
+
+      {resumeProfile && !interviewStarted && (
+        <ResumeAnalysisCard profile={resumeProfile} onStart={() => setInterviewStarted(true)} />
+      )}
+
+      {interviewStarted && questions?.[currentQuesIndex] && (
+        <div className="mt-6 space-y-4 max-w-4xl mx-auto">
+          <div className="w-full h-2 rounded-full bg-slate-800">
+            <div className="h-2 rounded-full bg-linear-to-r from-cyan-400 to-purple-500 transition-all duration-700" style={{ width: `${((currentQuesIndex + 1) / questions.length) * 100}%` }} />
           </div>
-        )}
+          <p className="text-sm text-slate-500 inline">
+            Question {currentQuesIndex + 1} / {questions.length}
+          </p>
 
-        {!loading && !questions && <div className="mt-6 text-center text-slate-100">No questions yet. Upload a resume to begin.</div>}
-
-        {resumeProfile && !interviewStarted && (
-          <ResumeAnalysisCard profile={resumeProfile} onStart={() => setInterviewStarted(true)} />
-        )}
-
-        {interviewStarted && questions?.[currentQuesIndex] && (
-          <div className="mt-6 space-y-4 max-w-4xl mx-auto">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-blue-600 h-2 rounded-full transition-all duration-2300" style={{ width: `${((currentQuesIndex + 1) / questions.length) * 100}%` }} />
+          <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-5 backdrop-blur-xl transition hover:border-cyan-500/30">
+            <div className="flex flex-col items-center">
+              <p className="mb-3 text-xs uppercase tracking-wider text-cyan-400">AI Interviewer</p>
+              <div style={{ transform: `scale(${0.8 + blobIntensity * 0.25})`, transition: "transform 120ms linear" }}>
+                <div className={`ai-orb mb-5 ${interviewState === "speaking" ? "speaking" : interviewState === "listening" ? "listening" : ""}`} />
+              </div>
+              <p className="font-medium text-slate-100">
+                {displayedText ? isFollowUp ? `Follow-up: ${displayedText}` : `${currentQuesIndex + 1}. ${displayedText}` : ""}
+                <span className="text-blue-500 font-light">▋</span>
+              </p>
             </div>
-            <p className="text-sm text-slate-500 inline">
-              Question {currentQuesIndex + 1} / {questions.length}
-            </p>
-
-            <div className="bg-white border rounded-xl p-5 shadow-sm hover:shadow-md transition">
-              <div className="flex flex-col items-center">
-                <p className="mb-3 text-xs uppercase tracking-wider text-slate-400">AI Interviewer</p>
-                <div style={{ transform: `scale(${0.8 + blobIntensity * 0.25})`, transition: "transform 120ms linear" }}>
-                  <div className={`ai-orb mb-5 ${interviewState === "speaking" ? "speaking" : interviewState === "listening" ? "listening" : ""}`} />
-                </div>
-                <p className="font-medium text-slate-900">
-                  {displayedText ? isFollowUp ? `Follow-up: ${displayedText}` : `${currentQuesIndex + 1}. ${displayedText}` : ""}
-                  <span className="text-blue-500 font-light">▋</span>
-                </p>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className={`inline-block mt-2 text-xs px-2 py-1 rounded-full capitalize ${questions[currentQuesIndex].type === "skill" ? "bg-blue-100 text-blue-700" : questions[currentQuesIndex].type === "technology" ? "bg-green-100 text-green-700" : "bg-purple-100 text-purple-700"}`}>
-                  {questions[currentQuesIndex].type}
-                </span>
-                <span className="text-xs mx-0.5 px-2 py-1 rounded-full bg-slate-100 text-slate-600">
-                  {questions[currentQuesIndex].difficulty}
-                </span>
-              </div>
+            <div className="flex justify-between items-center">
+              <span className={`inline-block mt-2 text-xs px-2 py-1 rounded-full capitalize ${questions[currentQuesIndex].type === "skill" ? "bg-cyan-500/10 text-cyan-300 border border-cyan-500/20" : questions[currentQuesIndex].type === "technology" ? "bg-green-500/10 text-green-300 border border-green-500/20" : "bg-purple-500/10 text-purple-300 border border-purple-500/20"}`}>
+                {questions[currentQuesIndex].type}
+              </span>
+              <span className="text-xs mx-0.5 px-2 py-1 rounded-full bg-white/3 border border-white/10 text-slate-400">
+                {questions[currentQuesIndex].difficulty}
+              </span>
             </div>
-            {interviewState !== "speaking" && (
-              <div className="bg-white border rounded-xl p-5 shadow-sm">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Your Answer</label>
-                <textarea
-                  value={currentAnswer}
-                  onChange={(e) => setCurrentAnswer(e.target.value)}
-                  disabled={!!feedback && !isFollowUp}
-                  placeholder="Explain your approach in detail..."
-                  className="w-full min-h-45 rounded-xl border border-slate-300 p-4 text-black resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  autoFocus
-                />
-                <div className="flex justify-between items-center mt-4">
-                  <span className="text-sm text-slate-500">
-                    {currentAnswer.length} characters
-                  </span>
-
-                  <div className="flex gap-3">
-                    {!feedback ? (
-                      <>
-                        <button onClick={handleSkip} className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 transition">
-                          Skip
-                        </button>
-                        <button onClick={handleSubmitAnswer} disabled={!currentAnswer.trim()} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition">
-                          Submit Answer
-                        </button>
-                      </>
-                    ) : (isFollowUp ? (
-                      <button disabled={!currentAnswer.trim()} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition" onClick={() => {
-                        setIsFollowUp(false);
-                        setFollowUpQuestion(null);
-                        hasSpokenRef.current = true;
-                        window.scrollBy({ top: 800, behavior: "smooth" });
-                      }}>
-                        Follow Up &rarr;
-                      </button>
-                    ) : (
-                      <button onClick={handleNextQuestion} className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition">
-                        Next Question &rarr;
-                      </button>
-                    )
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-            {(feedback && !isFollowUp) && (
-              <div className={`bg-white border rounded-xl p-5 ${scoreColor} shadow-sm`}>
-                <h3 className="font-bold mb-3">Score: {feedback.score}/100</h3>
-
-                <div className="mb-3">
-                  <p className="font-semibold">Strengths</p>
-                  <ul className="list-disc ml-5">
-                    {feedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                  </ul>
-                </div>
-
-                <div className="mb-3">
-                  <p className="font-semibold">Weaknesses</p>
-                  <ul className="list-disc ml-5">
-                    {feedback.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
-                  </ul>
-                </div>
-
-                <div>
-                  <p className="font-semibold">Improvement</p>
-                  <p>{feedback.improvement}</p>
-                </div>
-              </div>
-            )}
           </div>
-        )}
+          {interviewState !== "speaking" && (
+            <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-5 backdrop-blur-xl">
+              <label className="block text-sm font-medium text-slate-700 mb-2">Your Answer</label>
+              <textarea
+                value={currentAnswer}
+                onChange={(e) => setCurrentAnswer(e.target.value)}
+                disabled={!!feedback && !isFollowUp}
+                placeholder="Explain your approach in detail..."
+                className="w-full min-h-45 rounded-xl border border-slate-700 bg-slate-950 p-4 text-slate-100 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                autoFocus
+              />
+              <div className="flex justify-between items-center mt-4">
+                <span className="text-sm text-slate-500">
+                  {currentAnswer.length} characters
+                </span>
 
-        {questions && currentQuesIndex >= questions.length && (
-          <InterviewResults answers={answers} averageScore={averageScore} averageScoreColor={averageScoreColor} questions={questions} topStrengths={topStrengths} topWeaknesses={topWeaknesses} />
-        )}
-      </div>
+                <div className="flex gap-3">
+                  {!feedback ? (
+                    <>
+                      <button onClick={handleSkip} className="px-4 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition">
+                        Skip
+                      </button>
+                      <button onClick={handleSubmitAnswer} disabled={!currentAnswer.trim()} className="px-4 py-2 rounded-lg bg-cyan-500 text-black hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                        Submit Answer
+                      </button>
+                    </>
+                  ) : (isFollowUp ? (
+                    <button disabled={!currentAnswer.trim()} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition" onClick={() => {
+                      setIsFollowUp(false);
+                      setFollowUpQuestion(null);
+                      hasSpokenRef.current = true;
+                      window.scrollBy({ top: 800, behavior: "smooth" });
+                    }}>
+                      Follow Up &rarr;
+                    </button>
+                  ) : (
+                    <button onClick={handleNextQuestion} className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition">
+                      Next Question &rarr;
+                    </button>
+                  )
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          {(feedback && !isFollowUp) && (
+            <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-5 backdrop-blur-xl">
+              <h3 className={`font-bold mb-3 ${scoreColor}`}>Score: {feedback.score}/100</h3>
+
+              <div className="mb-3">
+                <p className="font-semibold">Strengths</p>
+                <ul className="list-disc ml-5">
+                  {feedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                </ul>
+              </div>
+
+              <div className="mb-3">
+                <p className="font-semibold">Weaknesses</p>
+                <ul className="list-disc ml-5">
+                  {feedback.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
+                </ul>
+              </div>
+
+              <div>
+                <p className="font-semibold">Improvement</p>
+                <p>{feedback.improvement}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {questions && currentQuesIndex >= questions.length && (
+        <InterviewResults answers={answers} averageScore={averageScore} averageScoreColor={averageScoreColor} questions={questions} topStrengths={topStrengths} topWeaknesses={topWeaknesses} />
+      )}
+    </div>
     </main >
   );
 }

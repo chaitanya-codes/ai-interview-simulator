@@ -1,4 +1,5 @@
 import { InterviewAnswer, InterviewQuestion } from "@/types/interview";
+import CountUp from "react-countup";
 
 type Props = {
     answers: InterviewAnswer[];
@@ -11,32 +12,35 @@ type Props = {
 
 export default function InterviewResults({ answers, questions, averageScore, averageScoreColor, topStrengths, topWeaknesses }: Props) {
     return (
-        <div className="mt-6 bg-white border rounded-xl p-6 text-center max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-indigo-400">Interview Complete &#127881;</h2>
-            <p className="text-gray-600 mt-2">Questions Answered: {answers.length - answers.filter(a => a.answer === "Skipped").length} / {questions.length}</p>
+        <div className="mt-6 max-w-4xl mx-auto rounded-2xl border border-cyan-500/10 bg-slate-950/95 p-6 backdrop-blur-xl shadow-[0_0_40px_rgba(34,211,238,.08)]">
 
-            <p className={`text-3xl font-bold mt-4 ${averageScoreColor}`}>{averageScore}/100</p>
-            <p className="text-gray-500">Average Interview Score</p>
-            <div className="mt-6 text-left">
-                <h3 className="font-bold text-lg mb-2 text-slate-900">
-                    Strength Areas
-                </h3>
-                <ul className="list-disc ml-5 text-green-600">
-                    {topStrengths.length ? (topStrengths.map((strength, i) => <li key={i}>{strength}</li>)) : (<li>No major strengths identified</li>)}
-                </ul>
-            </div>
+            <h2 className="text-3xl font-bold text-center bg-linear-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">Interview Complete 🎉</h2>
+            <p className="mt-2 text-center text-slate-400">Questions Answered: {answers.length - answers.filter(a => a.answer === "Skipped").length} / {questions.length}</p>
 
-            <div className="mt-6 text-left">
-                <h3 className="font-bold text-lg mb-2 text-slate-900">
-                    Areas To Improve
-                </h3>
-                <ul className="list-disc ml-5 text-red-600">
-                    {topWeaknesses.length  ? (topWeaknesses.map((weakness, i) => <li key={i}>{weakness}</li>)) : (<li>No major weaknesses identified</li>)}
-                </ul>
+            <p className={`text-5xl font-bold mt-6 text-center ${averageScoreColor}`}><CountUp end={averageScore} duration={1.5} />/100</p>
+
+            <p className="text-slate-500 text-center mt-2">Average Interview Score</p>
+            <div className="grid md:grid-cols-2 gap-6 mt-8">
+                <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-5">
+                    <h3 className="font-bold text-lg mb-3 text-green-400">Strength Areas</h3>
+
+                    <ul className="list-disc ml-5 text-slate-300">
+                        {topStrengths.length ? (topStrengths.map((strength, i) => <li key={i}>{strength}</li>)) : (<li>No major strengths identified</li>)}
+                    </ul>
+                </div>
+                <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-5">
+                    <h3 className="font-bold text-lg mb-3 text-red-400">Areas To Improve</h3>
+
+                    <ul className="list-disc ml-5 text-slate-300">
+                        {topWeaknesses.length ? (topWeaknesses.map((weakness, i) => <li key={i}>{weakness}</li>)) : (<li>No major weaknesses identified</li>)}
+                    </ul>
+                </div>
             </div>
-            <div>
-                <button className="bg-lime-600 hover:bg-lime-700 p-2 border border-amber-400 rounded-2xl" onClick={() => window.location.reload()}>Start over</button>
+            <div className="mt-8">
+                <button className="w-full rounded-xl bg-cyan-500 py-3 font-medium text-black shadow-[0_0_20px_rgba(34,211,238,.25)] transition hover:bg-cyan-400" onClick={() => window.location.reload()}>
+                    Start Over
+                </button>
             </div>
         </div>
-    )
+    );
 }
