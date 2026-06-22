@@ -343,7 +343,7 @@ export default function Home() {
               </div>
               <p className="font-medium text-slate-100">
                 {displayedText ? isFollowUp ? `Follow-up: ${displayedText}` : `${currentQuesIndex + 1}. ${displayedText}` : ""}
-                <span className="text-blue-500 font-light">▋</span>
+                <span className="text-cyan-400 font-light">▋</span>
               </p>
             </div>
             <div className="flex justify-between items-center">
@@ -357,7 +357,7 @@ export default function Home() {
           </div>
           {interviewState !== "speaking" && (
             <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-5 backdrop-blur-xl">
-              <label className="block text-sm font-medium text-slate-700 mb-2">Your Answer</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Your Answer</label>
               <textarea
                 value={currentAnswer}
                 onChange={(e) => setCurrentAnswer(e.target.value)}
@@ -382,7 +382,7 @@ export default function Home() {
                       </button>
                     </>
                   ) : (isFollowUp ? (
-                    <button disabled={!currentAnswer.trim()} className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition" onClick={() => {
+                    <button disabled={!currentAnswer.trim()} className="px-4 py-2 rounded-lg bg-purple-600 text-black hover:bg-purple-700 transition" onClick={() => {
                       setIsFollowUp(false);
                       setFollowUpQuestion(null);
                       hasSpokenRef.current = true;
@@ -405,16 +405,16 @@ export default function Home() {
               <h3 className={`font-bold mb-3 ${scoreColor}`}>Score: {feedback.score}/100</h3>
 
               <div className="mb-3">
-                <p className="font-semibold">Strengths</p>
+                <p className="font-semibold text-green-400">Strengths</p>
                 <ul className="list-disc ml-5">
-                  {feedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                  {feedback.strengths.length ? feedback.strengths.map((s, i) => <li key={i}>{s}</li>) : <p>-</p>}
                 </ul>
               </div>
 
               <div className="mb-3">
-                <p className="font-semibold">Weaknesses</p>
+                <p className="font-semibold text-red-400">Weaknesses</p>
                 <ul className="list-disc ml-5">
-                  {feedback.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
+                  {feedback.weaknesses.length ? feedback.weaknesses.map((w, i) => <li key={i}>{w}</li>) : <p>-</p>}
                 </ul>
               </div>
 
