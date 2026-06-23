@@ -218,7 +218,19 @@ export default function Home() {
       };
 
       recognition.onerror = (e: any) => {
+        if (e.error === "no-speech") {
+          try {
+            recognition.start();
+          } catch { }
+          return;
+        }
+
+        if (e.error === "not-allowed") {
+          alert("Microphone permission denied. Please allow microphone access.");
+          return;
+        }
         console.error(e);
+
         setInterviewState("idle");
       };
 
