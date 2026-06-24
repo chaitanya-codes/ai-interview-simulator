@@ -6,6 +6,7 @@ import ResumeAnalysisCard from "./components/ResumeAnalysisCard";
 import { ResumeProfile } from "@/types/resume";
 import ResumeUploader from "./components/ResumeUploader";
 import InterviewResults from "./components/InterviewResults";
+import InterviewHistory from "./components/InterviewHistory";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -315,6 +316,21 @@ export default function Home() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
+  useEffect(() => {
+    if (!questions || currentQuesIndex < questions.length || feedbacks.length === 0) return;
+
+    const history = JSON.parse(localStorage.getItem("interview-history") || "[]");
+
+    history.unshift({
+      id: crypto.randomUUID(),
+      date: new Date().toLocaleString(),
+      score: averageScore,
+      strengths: topStrengths,
+      weaknesses: topWeaknesses
+    });
+
+    localStorage.setItem("interview-history", JSON.stringify(history.slice(0, 20)));
+  }, [currentQuesIndex]);
 
   return (
     <main className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 p-6 flex justify-center">      <div className="w-full max-w-6xl">
@@ -323,16 +339,19 @@ export default function Home() {
       <p className="mb-8 text-slate-400">Upload your resume and get AI-generated interview questions.</p>
 
       {!questions && (
-        <ResumeUploader file={file} setFile={setFile} onDrop={handleDrop} onUpload={handleUpload} dragging={dragging} setDragging={setDragging} error={error} loading={loading} />
+        <>
+          <ResumeUploader file={file} setFile={setFile} onDrop={handleDrop} onUpload={handleUpload} dragging={dragging} setDragging={setDragging} error={error} loading={loading} />
+          {!loading && !questions && <div className="mt-6 text-center text-slate-100">No questions yet. Upload a resume to begin.</div>}
+          <InterviewHistory />
+        </>
       )}
+
 
       {loading && (
         <div className="mt-6 max-w-3xl mx-auto rounded-2xl border border-cyan-500/20 bg-slate-900/80 p-6 text-center text-cyan-300 backdrop-blur-xl">
           <div className="animate-pulse">Analyzing resume...</div>
         </div>
       )}
-
-      {!loading && !questions && <div className="mt-6 text-center text-slate-100">No questions yet. Upload a resume to begin.</div>}
 
       {resumeProfile && !interviewStarted && (
         <ResumeAnalysisCard profile={resumeProfile} onStart={() => setInterviewStarted(true)} />
@@ -440,9 +459,9 @@ export default function Home() {
       )}
 
       {questions && currentQuesIndex >= questions.length && (
-        <InterviewResults answers={answers} averageScore={averageScore} averageScoreColor={averageScoreColor} questions={questions} topStrengths={topStrengths} topWeaknesses={topWeaknesses} feedbacks={feedbacks}/>
+        <InterviewResults answers={answers} averageScore={averageScore} averageScoreColor={averageScoreColor} questions={questions} topStrengths={topStrengths} topWeaknesses={topWeaknesses} feedbacks={feedbacks} />
       )}
     </div>
-    </main >
+    </main>
   );
 }
