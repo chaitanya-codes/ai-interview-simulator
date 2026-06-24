@@ -428,7 +428,7 @@ export default function Home() {
       )}
 
       {questions && currentQuesIndex >= questions.length && (
-        <InterviewResults answers={answers} averageScore={averageScore} averageScoreColor={averageScoreColor} questions={questions} topStrengths={topStrengths} topWeaknesses={topWeaknesses} />
+        <InterviewResults answers={answers} averageScore={averageScore} averageScoreColor={averageScoreColor} questions={questions} topStrengths={topStrengths} topWeaknesses={topWeaknesses} feedbacks={feedbacks}/>
       )}
     </div>
     </main >

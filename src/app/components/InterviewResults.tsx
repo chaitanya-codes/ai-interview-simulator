@@ -1,5 +1,7 @@
 import { InterviewAnswer, InterviewQuestion } from "@/types/interview";
 import CountUp from "react-countup";
+import { downloadInterviewReport } from "@/utils/downloadInterviewReport";
+import { Feedback } from "@/types/interview";
 
 type Props = {
     answers: InterviewAnswer[];
@@ -8,9 +10,10 @@ type Props = {
     averageScoreColor: string;
     topStrengths: string[];
     topWeaknesses: string[];
+    feedbacks: Feedback[];
 };
 
-export default function InterviewResults({ answers, questions, averageScore, averageScoreColor, topStrengths, topWeaknesses }: Props) {
+export default function InterviewResults({ answers, questions, averageScore, averageScoreColor, topStrengths, topWeaknesses, feedbacks }: Props) {
     return (
         <div className="mt-6 max-w-4xl mx-auto rounded-2xl border border-cyan-500/10 bg-slate-950/95 p-6 backdrop-blur-xl shadow-[0_0_40px_rgba(34,211,238,.08)]">
 
@@ -36,8 +39,11 @@ export default function InterviewResults({ answers, questions, averageScore, ave
                     </ul>
                 </div>
             </div>
-            <div className="mt-8">
-                <button className="w-full rounded-xl bg-cyan-500 py-3 font-medium text-black shadow-[0_0_20px_rgba(34,211,238,.25)] transition hover:bg-cyan-400" onClick={() => window.location.reload()}>
+            <div className="flex gap-3 mt-8">
+                <button className="flex-1 rounded-xl bg-cyan-500 py-3 font-medium text-black hover:bg-cyan-400 transition" onClick={() => downloadInterviewReport({ averageScore, topStrengths, topWeaknesses, answers, questions, feedbacks})}>
+                    Download PDF
+                </button>
+                <button className="flex-1 rounded-xl bg-slate-700 py-3 font-medium text-white hover:bg-slate-600 transition" onClick={() => window.location.reload()}>
                     Start Over
                 </button>
             </div>
