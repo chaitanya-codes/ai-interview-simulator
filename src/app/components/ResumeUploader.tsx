@@ -18,7 +18,7 @@ export default function ResumeUploader({ file, setFile, dragging, setDragging, l
                 }}
                 onDragLeave={() => setDragging(false)}
                 onDrop={onDrop}
-                className={`rounded-2xl border-2 border-dashed p-10 text-center transition-all ${dragging ? "border-cyan-400 bg-cyan-500/10 shadow-[0_0_30px_rgba(34,211,238,.15)]" : "border-slate-700 bg-white/[0.02]"}`}
+                className={`rounded-2xl border-2 border-dashed p-10 text-center transition-all ${dragging ? "border-cyan-400 bg-cyan-500/10 shadow-[0_0_30px_rgba(34,211,238,.15)]" : "border-slate-700 bg-white/2"}`}
             >
                 <input id="resume-upload" type="file" accept=".pdf" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
 

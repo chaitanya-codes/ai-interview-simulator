@@ -39,7 +39,7 @@ export default function ResumeAnalysisCard({ profile, onStart }: Props) {
 
             <motion.div className="flex items-center justify-between mb-6" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
                 <div>
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">Resume Analysis</h2>
+                    <h2 className="text-3xl font-bold bg-linear-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">Resume Analysis</h2>
                     <p className="text-sm text-slate-500 mt-1">AI generated candidate profile</p>
                 </div>
 
@@ -48,28 +48,28 @@ export default function ResumeAnalysisCard({ profile, onStart }: Props) {
 
             <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" variants={container} initial="hidden" animate="show">
 
-                <motion.div variants={item} animate={{ boxShadow: ["0 0 0px rgba(34,211,238,0)", "0 0 25px rgba(34,211,238,.25)", "0 0 0px rgba(34,211,238,0)"] }} transition={{ boxShadow: { duration: 3, repeat: Infinity } }} className="rounded-xl border border-cyan-500/20 bg-white/[0.03] p-4">
+                <motion.div variants={item} animate={{ boxShadow: ["0 0 0px rgba(34,211,238,0)", "0 0 25px rgba(34,211,238,.25)", "0 0 0px rgba(34,211,238,0)"] }} transition={{ boxShadow: { duration: 3, repeat: Infinity } }} className="rounded-xl border border-cyan-500/20 bg-white/3 p-4">
                     <p className="text-sm text-slate-500">Resume Score</p>
                     <p className={`text-3xl font-bold ${scoreColor}`} style={{ textShadow: profile.score >= 80 ? "0 0 15px rgba(34,211,238,.5)" : undefined }}><CountUp end={profile.score} duration={1.5} /></p>
                 </motion.div>
 
-                <motion.div variants={item} className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><p className="text-sm text-slate-500">Skills</p><p className="text-3xl font-bold text-slate-100">{skillCount}</p></motion.div>
+                <motion.div variants={item} className="rounded-xl border border-white/10 bg-white/3 p-4"><p className="text-sm text-slate-500">Skills</p><p className="text-3xl font-bold text-slate-100">{skillCount}</p></motion.div>
 
-                <motion.div variants={item} className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><p className="text-sm text-slate-500">Technologies</p><p className="text-3xl font-bold text-slate-100">{techCount}</p></motion.div>
+                <motion.div variants={item} className="rounded-xl border border-white/10 bg-white/3 p-4"><p className="text-sm text-slate-500">Technologies</p><p className="text-3xl font-bold text-slate-100">{techCount}</p></motion.div>
 
-                <motion.div variants={item} className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><p className="text-sm text-slate-500">Projects</p><p className="text-3xl font-bold text-slate-100">{projectCount}</p></motion.div>
+                <motion.div variants={item} className="rounded-xl border border-white/10 bg-white/3 p-4"><p className="text-sm text-slate-500">Projects</p><p className="text-3xl font-bold text-slate-100">{projectCount}</p></motion.div>
 
             </motion.div>
 
             <motion.div className="grid md:grid-cols-2 gap-6 mb-6" initial="hidden" whileInView="show" viewport={{ once: true }} variants={container}>
 
-                <motion.div variants={item} className="rounded-xl border border-cyan-500/15 bg-cyan-500/[0.03] p-5">
+                <motion.div variants={item} className="rounded-xl border border-cyan-500/15 bg-cyan-500/3 p-5">
                     <h3 className="font-semibold text-cyan-400">Candidate</h3>
                     <p className="text-slate-100">{profile.candidateName ?? "Candidate"}</p>
                     <p className="text-sm text-slate-500 capitalize">Experience Level: {profile.experienceLevel}</p>
                 </motion.div>
 
-                <motion.div variants={item} className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+                <motion.div variants={item} className="rounded-xl border border-white/10 bg-white/3 p-5">
                     <h3 className="font-semibold mb-2 text-slate-100">Summary</h3>
                     <p className="text-slate-400">{profile.summary}</p>
                 </motion.div>
@@ -98,7 +98,7 @@ export default function ResumeAnalysisCard({ profile, onStart }: Props) {
                         </motion.span>
                     ))}
 
-                    {profile.technologies.length > 15 && <span className="px-3 py-1 rounded-full border border-white/10 bg-white/[0.03] text-slate-400 text-sm">+{profile.technologies.length - 15} more</span>}
+                    {profile.technologies.length > 15 && <span className="px-3 py-1 rounded-full border border-white/10 bg-white/3 text-slate-400 text-sm">+{profile.technologies.length - 15} more</span>}
                 </div>
             </div>            <div className="mb-6">
                 <h3 className="font-semibold mb-3 text-slate-100">Projects</h3>
@@ -112,7 +112,7 @@ export default function ResumeAnalysisCard({ profile, onStart }: Props) {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.45, delay: i * 0.06 }}
                             whileHover={{ y: -6, scale: 1.01 }}
-                            className="rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-all hover:border-cyan-500/30 hover:bg-white/[0.05]"
+                            className="rounded-xl border border-white/10 bg-white/3 p-4 transition-all hover:border-cyan-500/30 hover:bg-white/5"
                         >
                             <h4 className="font-semibold text-slate-100">{project.name}</h4>
 
@@ -134,7 +134,7 @@ export default function ResumeAnalysisCard({ profile, onStart }: Props) {
             {profile.education?.length ? (
                 <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.35 }} className="mb-6">
                     <h3 className="font-semibold mb-2 text-slate-100">Education</h3>
-                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                    <div className="rounded-xl border border-white/10 bg-white/3 p-4">
                         <ul className="list-disc ml-5 text-slate-400">
                             {profile.education.map((edu, i) => (
                                 <li key={i}>{edu}</li>

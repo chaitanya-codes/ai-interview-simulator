@@ -1,5 +1,4 @@
 "use client";
-
 import { Feedback, InterviewAnswer, InterviewQuestion } from "@/types/interview";
 import { useState, useEffect, useRef } from "react";
 import ResumeAnalysisCard from "./components/ResumeAnalysisCard";
@@ -28,6 +27,8 @@ export default function Home() {
   const [interviewStarted, setInterviewStarted] = useState(false);
   const hasSpokenRef = useRef(false);
   const transcriptRef = useRef("");
+  const questionStartTimeRef = useRef(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   async function handleUpload() {
     if (!file) return;
@@ -72,11 +73,15 @@ export default function Home() {
     if (!questions?.[currentQuesIndex]) return;
 
     const currentQuestion = questions[currentQuesIndex];
+    const timeTaken = Math.round((Date.now() - questionStartTimeRef.current) / 1000);
+    setInterviewState("idle");
+    stopListening();
 
     const answer: InterviewAnswer = {
       questionId: currentQuestion.id,
       isFollowUp,
       answer: currentAnswer,
+      timeTaken
     };
 
     setAnswers(prev => [...prev, answer]);
@@ -133,13 +138,9 @@ export default function Home() {
         }
         return updated;
       });
-      setTimeout(() => {
-        handleNextQuestion();
-      }, 2000);
     }
 
     setCurrentAnswer("");
-    stopListening();
   }
 
   function handleNextQuestion() {
@@ -156,10 +157,12 @@ export default function Home() {
 
   function handleSkip() {
     if (!questions?.[currentQuesIndex]) return;
+    const timeTaken = Math.round((Date.now() - questionStartTimeRef.current) / 1000);
 
     setAnswers(prev => [...prev, {
       questionId: questions[currentQuesIndex].id,
       answer: "Skipped",
+      timeTaken
     },
     ]);
     if (isFollowUp) {
@@ -284,6 +287,8 @@ export default function Home() {
       setInterviewState("speaking");
     }
     utterance.onend = () => {
+      questionStartTimeRef.current = Date.now();
+      setElapsedTime(0);
       setInterviewState("listening");
       startListening();
     }
@@ -302,7 +307,14 @@ export default function Home() {
   }, [currentQuesIndex, questions, isFollowUp, followUpQuestion, interviewStarted]);
 
   useEffect(() => {
+    if (interviewState !== "listening") return;
+
+    const interval = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - questionStartTimeRef.current) / 1000));
+    }, 1000);
+
     window.scrollBy({ top: window.innerHeight * 0.6, behavior: "smooth" });
+    return () => clearInterval(interval);
   }, [interviewState]);
 
   useEffect(() => {
@@ -388,8 +400,12 @@ export default function Home() {
           </div>
           {interviewState !== "speaking" && (
             <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-5 backdrop-blur-xl">
-              <label className="block text-sm font-medium text-slate-300 mb-2">Your Answer</label>
+              <div className="flex justify-between">
+                <label className="text-sm font-medium text-slate-300 mb-2" htmlFor="answer">Your Answer</label>
+                <p className="text-sm text-cyan-400 font-medium inline-block">&#9201; {Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, "0")}</p>
+              </div>
               <textarea
+                id="answer"
                 value={currentAnswer}
                 onChange={(e) => setCurrentAnswer(e.target.value)}
                 disabled={!!feedback && !isFollowUp}
@@ -416,6 +432,7 @@ export default function Home() {
                     <button disabled={!currentAnswer.trim()} className="px-4 py-2 rounded-lg bg-purple-600 text-black hover:bg-purple-700 transition" onClick={() => {
                       setIsFollowUp(false);
                       setFollowUpQuestion(null);
+                      handleSubmitAnswer();
                       hasSpokenRef.current = true;
                       window.scrollBy({ top: 800, behavior: "smooth" });
                     }}>
